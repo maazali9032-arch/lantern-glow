@@ -341,3 +341,37 @@ body {
   html { scroll-behavior: auto; }
   .lantern-sway, .mote { animation: none !important; }
 }
+
+.brand-ribbon {
+  position: fixed;
+  bottom: 0;
+  inset-inline: 0;
+  z-index: 60;
+  height: clamp(10px, 1.8svh, 16px);
+  overflow: hidden;
+  border-top: 1px solid var(--gold-line);
+  background: color-mix(in oklab, var(--ink) 30%, transparent);
+  color: var(--gold);
+  font-size: 9px;
+  line-height: clamp(10px, 1.8svh, 16px);
+  letter-spacing: 0.2em;
+}
+.brand-marquee {
+  display: flex;
+  width: max-content;
+  animation: brand-scroll 35s linear infinite;
+}
+.brand-marquee > span {
+  display: flex;
+  flex-shrink: 0;
+}
+@keyframes brand-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-marquee {
+    animation: none;
+  }
+}

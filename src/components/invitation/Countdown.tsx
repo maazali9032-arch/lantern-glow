@@ -20,6 +20,12 @@ export function Countdown({ target }: { target: string }) {
     return () => window.clearInterval(id);
   }, [target]);
 
+  if (
+    !Number.isFinite(new Date(target).getTime()) ||
+    (mounted && new Date(target).getTime() <= Date.now())
+  )
+    return null;
+
   const units = [
     ["Days", t.days],
     ["Hours", t.hours],
@@ -28,7 +34,7 @@ export function Countdown({ target }: { target: string }) {
   ] as const;
 
   return (
-    <div className="flex items-start justify-center gap-5 sm:gap-9" aria-live="off">
+    <div className="flex items-start justify-center gap-3 sm:gap-9" aria-live="off">
       {units.map(([label, value], i) => (
         <div key={label} className="flex items-start gap-5 sm:gap-9">
           <div className="flex flex-col items-center">

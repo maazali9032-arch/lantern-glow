@@ -1,10 +1,13 @@
 import { Lantern } from "./Lantern";
-import type { ShopFallback } from "@/lib/publicInvitation";
+import { safeUrl, type ShopFallback } from "@/lib/publicInvitation";
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[color:var(--ink)] px-6 py-20 text-[color:var(--ivory)]">
-      <div className="lit-scope flex flex-col items-center text-center" style={{ ["--lit" as string]: 1 }}>
+      <div
+        className="lit-scope flex flex-col items-center text-center"
+        style={{ ["--lit" as string]: 1 }}
+      >
         <Lantern size={78} chain={70} glowScale={7} swayDuration={10} />
         <div className="mt-10 max-w-sm">{children}</div>
       </div>
@@ -52,8 +55,12 @@ export function RequestErrorScreen({ onRetry }: { onRetry?: () => void }) {
 }
 
 export function FallbackScreen({ shop }: { shop: ShopFallback }) {
+  const whatsapp =
+    safeUrl(shop.whatsapp) ??
+    (shop.whatsapp && /^[+\d\s()-]+$/.test(shop.whatsapp) && shop.whatsapp.replace(/\D/g, "")
+      ? `https://wa.me/${shop.whatsapp.replace(/\D/g, "")}`
+      : undefined);
   const lines = [shop.address, shop.city, shop.businessContact].filter(Boolean) as string[];
-
 
   return (
     <Shell>
@@ -76,17 +83,8 @@ export function FallbackScreen({ shop }: { shop: ShopFallback }) {
                 Call
               </a>
             )}
-            {shop.whatsapp && (
-              <a
-                href={
-                  /^https?:/i.test(shop.whatsapp)
-                    ? shop.whatsapp
-                    : `https://wa.me/${shop.whatsapp.replace(/\D/g, "")}`
-                }
-                target="_blank"
-                rel="noreferrer noopener"
-                className="btn-outline"
-              >
+            {whatsapp && (
+              <a href={whatsapp} target="_blank" rel="noreferrer noopener" className="btn-outline">
                 WhatsApp
               </a>
             )}

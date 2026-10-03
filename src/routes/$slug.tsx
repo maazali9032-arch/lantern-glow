@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { BrandRibbon } from "@/components/invitation/BrandRibbon";
 import { Atmosphere } from "@/components/invitation/Atmosphere";
 import { Hero } from "@/components/invitation/Hero";
 import { Message } from "@/components/invitation/Message";
@@ -35,14 +36,16 @@ export const Route = createFileRoute("/$slug")({
 });
 
 function InvitationPage() {
-  const params = Route.useParams();
-  const slug = sanitizeSlug(params.slug ?? "");
+  const pathname = Route.useMatch().pathname;
+  const slug = sanitizeSlug(pathname);
 
   const query = useQuery({
     queryKey: ["public-invitation", slug],
     queryFn: () => fetchPublicInvitation(slug as string),
     enabled: Boolean(slug),
-    retry: 1,
+    retry: false,
+    staleTime: Infinity,
+    refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 
@@ -55,11 +58,15 @@ function InvitationPage() {
   if (result.state === "fallback") return <FallbackScreen shop={result.shop} />;
 
   const { content } = result;
-  const dateLine = [content.weddingDate, content.startTime].filter(Boolean).join(" · ");
+  const dateLine = [content.weddingDate].filter(Boolean).join(" · ");
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-[color:var(--ink)] text-[color:var(--ivory)]">
+    <main
+      key={slug}
+      className="relative min-h-screen overflow-x-hidden bg-[color:var(--ink)] text-[color:var(--ivory)]"
+    >
       <Atmosphere />
+      <BrandRibbon name={result.brandName} />
       <Hero
         {...(content.invocation ? { invocation: content.invocation } : {})}
         {...(content.groom.name ? { groomName: content.groom.name } : {})}

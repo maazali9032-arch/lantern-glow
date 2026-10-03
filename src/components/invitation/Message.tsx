@@ -19,9 +19,7 @@ function Profile({ person, label }: { person: PublicPerson; label: string }) {
           className="mb-5 h-28 w-28 rounded-full border border-[color:var(--gold-line)] object-cover"
         />
       )}
-      {person.name && (
-        <p className="display text-2xl text-[color:var(--ivory)]">{person.name}</p>
-      )}
+      {person.name && <p className="display text-2xl text-[color:var(--ivory)]">{person.name}</p>}
       {lines.map((line) => (
         <p key={line} className="mt-1 text-xs tracking-[0.14em] text-[color:var(--ivory)]/50">
           {line}
@@ -33,14 +31,12 @@ function Profile({ person, label }: { person: PublicPerson; label: string }) {
 
 export function Message({ content }: { content: LiveContent }) {
   const ref = useLightSection<HTMLElement>();
-  const { groom, bride, relatives, countdownTarget, weddingDate, startTime, endTime } = content;
+  const { groom, bride, relatives, countdownTarget, startTime, endTime } = content;
 
   const timeLine = [startTime, endTime].filter(Boolean).join(" – ");
-  const hasProfiles = Boolean(
-    groom.name || bride.name || groom.photoUrl || bride.photoUrl || groom.parents || bride.parents,
-  );
+  const hasProfiles = Boolean([groom, bride].some((person) => Object.values(person).some(Boolean)));
 
-  if (!hasProfiles && !relatives && !countdownTarget && !weddingDate) return null;
+  if (!hasProfiles && !relatives && !countdownTarget && !timeLine) return null;
 
   return (
     <section
@@ -67,14 +63,9 @@ export function Message({ content }: { content: LiveContent }) {
           </p>
         )}
 
-        {(weddingDate || timeLine) && (
+        {timeLine && (
           <>
             <div className="reveal mt-10 rule" />
-            {weddingDate && (
-              <p className="reveal mt-7 text-[0.62rem] uppercase tracking-[0.4em] text-[color:var(--ivory)]/70">
-                {weddingDate}
-              </p>
-            )}
             {timeLine && (
               <p className="reveal mt-2 text-[0.62rem] uppercase tracking-[0.32em] text-[color:var(--ivory)]/45">
                 {timeLine}

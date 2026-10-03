@@ -75,7 +75,7 @@ export interface ShopFallback {
 }
 
 export type PublicInvitationResult =
-  | { state: "live"; publicUrl?: string; content: LiveContent }
+  | { state: "live"; publicUrl?: string; content: LiveContent; brandName?: string }
   | { state: "fallback"; shop: ShopFallback }
   | { state: "not_found" };
 
@@ -117,10 +117,15 @@ const str = (v: unknown): string | undefined => {
 const num = (v: unknown): number | undefined =>
   typeof v === "number" && Number.isFinite(v) ? v : undefined;
 
-const safeUrl = (v: unknown): string | undefined => {
+export const safeUrl = (v: unknown): string | undefined => {
   const s = str(v);
   if (!s) return undefined;
-  return /^(https?:|\/\/|\/)/i.test(s) ? s : undefined;
+  try {
+    const parsed = new URL(s);
+    return parsed.protocol === "https:" || parsed.protocol === "http:" ? s : undefined;
+  } catch {
+    return undefined;
+  }
 };
 
 const pick = (o: Record<string, unknown>, keys: string[]) => {
@@ -155,15 +160,15 @@ function normalizeEvents(raw: unknown): PublicEvent[] {
     const time = pick(item, ["time", "start_time"]);
     const venue = pick(item, ["venue", "venue_name"]);
     const note = pick(item, ["note", "description"]);
-    if (!name && !date && !venue) return;
-    const ev: PublicEvent = { id: str(item['id']) ?? `event-${i}` };
+    if (![name, date, time, venue, note, str(item["city"])].some(Boolean)) return;
+    const ev: PublicEvent = { id: str(item["id"]) ?? `event-${i}` };
     if (name) ev.name = name;
     if (date) ev.date = date;
     if (time) ev.time = time;
     if (venue) ev.venue = venue;
-    const city = str(item['city']);
+    const city = str(item["city"]);
     if (city) ev.city = city;
-    const mapsUrl = safeUrl(item['maps_url'] ?? item['mapsUrl']);
+    const mapsUrl = safeUrl(item["maps_url"] ?? item["mapsUrl"]);
     if (mapsUrl) ev.mapsUrl = mapsUrl;
     if (note) ev.note = note;
     out.push(ev);
@@ -181,13 +186,13 @@ function normalizeGallery(raw: unknown, fallbackAlt: string): PublicGalleryItem[
       continue;
     }
     if (!isObj(item)) continue;
-    const url = safeUrl(item['url'] ?? item['src'] ?? item['image_url']);
+    const url = safeUrl(item["url"] ?? item["src"] ?? item["image_url"]);
     if (!url) continue;
-    const g: PublicGalleryItem = { url, alt: str(item['alt']) ?? fallbackAlt };
-    const caption = str(item['caption']);
+    const g: PublicGalleryItem = { url, alt: str(item["alt"]) ?? fallbackAlt };
+    const caption = str(item["caption"]);
     if (caption) g.caption = caption;
-    const w = num(item['width']);
-    const h = num(item['height']);
+    const w = num(item["width"]);
+    const h = num(item["height"]);
     if (w) g.width = w;
     if (h) g.height = h;
     out.push(g);
@@ -200,12 +205,12 @@ function normalizeContacts(raw: unknown): PublicContact[] {
   const out: PublicContact[] = [];
   for (const item of raw.slice(0, 2)) {
     if (!isObj(item)) continue;
-    const phone = str(item['phone']);
+    const phone = str(item["phone"]);
     if (!phone) continue;
     const c: PublicContact = { phone };
-    const name = str(item['name']);
+    const name = str(item["name"]);
     if (name) c.name = name;
-    const wa = safeUrl(item['whatsapp_url']);
+    const wa = safeUrl(item["whatsapp_url"]);
     if (wa) c.whatsappUrl = wa;
     out.push(c);
   }
@@ -214,7 +219,7 @@ function normalizeContacts(raw: unknown): PublicContact[] {
 
 function buildCountdownTarget(date?: string, time?: string): string | undefined {
   if (!date) return undefined;
-  const candidates = [time ? `${date} ${time}` : null, date].filter(Boolean) as string[];
+  const candidates = [time ? `${date.split("T")[0]}T${time}` : date];
   for (const c of candidates) {
     const t = new Date(c).getTime();
     if (Number.isFinite(t) && t > Date.now()) return new Date(t).toISOString();
@@ -222,10 +227,7 @@ function buildCountdownTarget(date?: string, time?: string): string | undefined 
   return undefined;
 }
 
-function normalizePerson(
-  c: Record<string, unknown>,
-  prefix: "groom" | "bride",
-): PublicPerson {
+function normalizePerson(c: Record<string, unknown>, prefix: "groom" | "bride"): PublicPerson {
   const p: PublicPerson = {};
   const name = str(c[`${prefix}_name`]);
   if (name) p.name = name;
@@ -249,38 +251,38 @@ function normalizeContent(raw: unknown): LiveContent {
   const content: LiveContent = {
     groom,
     bride,
-    events: normalizeEvents(c['events']),
+    events: normalizeEvents(c["events"]),
     venue: {},
-    gallery: normalizeGallery(c['gallery'], coupleAlt),
-    musicEnabled: c['music_enabled'] === true,
-    contacts: normalizeContacts(c['contacts']),
+    gallery: normalizeGallery(c["gallery"], coupleAlt),
+    musicEnabled: c["music_enabled"] === true,
+    contacts: normalizeContacts(c["contacts"]),
   };
 
-  const relatives = str(c['relatives']);
+  const relatives = str(c["relatives"]);
   if (relatives) content.relatives = relatives;
-  const invocation = str(c['invocation']);
+  const invocation = str(c["invocation"]);
   if (invocation) content.invocation = invocation;
-  const weddingDate = str(c['wedding_date']);
+  const weddingDate = str(c["wedding_date"]);
   if (weddingDate) content.weddingDate = weddingDate;
-  const startTime = str(c['start_time']);
+  const startTime = str(c["start_time"]);
   if (startTime) content.startTime = startTime;
-  const endTime = str(c['end_time']);
+  const endTime = str(c["end_time"]);
   if (endTime) content.endTime = endTime;
 
-  const venueName = str(c['venue_name']);
+  const venueName = str(c["venue_name"]);
   if (venueName) content.venue.name = venueName;
-  const venueAddress = str(c['venue_address']);
+  const venueAddress = str(c["venue_address"]);
   if (venueAddress) content.venue.address = venueAddress;
-  const city = str(c['city']);
+  const city = str(c["city"]);
   if (city) content.venue.city = city;
-  const mapsUrl = safeUrl(c['maps_url']);
+  const mapsUrl = safeUrl(c["maps_url"]);
   if (mapsUrl) content.venue.mapsUrl = mapsUrl;
-  const venueImage = safeUrl(c['venue_image_url']);
+  const venueImage = safeUrl(c["venue_image_url"]);
   if (venueImage) content.venue.imageUrl = venueImage;
 
-  const musicUrl = safeUrl(c['music_url']);
+  const musicUrl = safeUrl(c["music_url"]);
   if (musicUrl) content.musicUrl = musicUrl;
-  const qrText = str(c['qr_text']);
+  const qrText = str(c["qr_text"]);
   if (qrText) content.qrText = qrText;
 
   const target = buildCountdownTarget(content.weddingDate, content.startTime);
@@ -292,17 +294,17 @@ function normalizeContent(raw: unknown): LiveContent {
 function normalizeShop(raw: unknown): ShopFallback {
   const s = isObj(raw) ? raw : {};
   const shop: ShopFallback = {};
-  const name = str(s['name']);
+  const name = str(s["name"]);
   if (name) shop.name = name;
-  const phone = str(s['phone']);
+  const phone = str(s["phone"]);
   if (phone) shop.phone = phone;
-  const whatsapp = str(s['whatsapp']);
+  const whatsapp = str(s["whatsapp"]);
   if (whatsapp) shop.whatsapp = whatsapp;
-  const address = str(s['address']);
+  const address = str(s["address"]);
   if (address) shop.address = address;
-  const city = str(s['city']);
+  const city = str(s["city"]);
   if (city) shop.city = city;
-  const businessContact = str(s['business_contact']);
+  const businessContact = str(s["business_contact"]);
   if (businessContact) shop.businessContact = businessContact;
   return shop;
 }
@@ -310,22 +312,27 @@ function normalizeShop(raw: unknown): ShopFallback {
 export function normalizeResponse(payload: unknown): PublicInvitationResult {
   let root: unknown = payload;
   if (Array.isArray(root)) root = root[0];
-  if (isObj(root) && !("state" in root) && isObj(root['data'])) root = root['data'];
-  if (!isObj(root)) return { state: "not_found" };
+  if (isObj(root) && !("state" in root) && isObj(root["data"])) root = root["data"];
+  if (!isObj(root)) throw new InvitationRequestError("Invalid invitation response.");
 
-  const state = str(root['state']);
+  const state = str(root["state"]);
   if (state === "live") {
-    const invitation = isObj(root['invitation']) ? root['invitation'] : {};
-    const publicUrl = safeUrl(invitation['public_url']);
+    const invitation = isObj(root["invitation"]) ? root["invitation"] : {};
+    const publicUrl = safeUrl(invitation["public_url"]);
     const result: PublicInvitationResult = {
       state: "live",
-      content: normalizeContent(root['content']),
+      content: normalizeContent(root["content"]),
     };
-    if (publicUrl) (result as { publicUrl?: string }).publicUrl = publicUrl;
+    if (publicUrl) result.publicUrl = publicUrl;
+    // Only the approved public shop name is retained during live rendering.
+    const shop = isObj(root["shop"]) ? root["shop"] : {};
+    const brandName = str(shop["name"]);
+    if (brandName) result.brandName = brandName;
     return result;
   }
-  if (state === "fallback") return { state: "fallback", shop: normalizeShop(root['shop']) };
-  return { state: "not_found" };
+  if (state === "fallback") return { state: "fallback", shop: normalizeShop(root["shop"]) };
+  if (state === "not_found") return { state: "not_found" };
+  throw new InvitationRequestError("Invalid invitation state.");
 }
 
 /* ------------------------------------------------------------------ */
@@ -335,8 +342,8 @@ export function normalizeResponse(payload: unknown): PublicInvitationResult {
 export class InvitationRequestError extends Error {}
 
 export async function fetchPublicInvitation(slug: string): Promise<PublicInvitationResult> {
-  const url = import.meta.env['VITE_SUPABASE_URL'] as string | undefined;
-  const anonKey = import.meta.env['VITE_SUPABASE_ANON_KEY'] as string | undefined;
+  const url = import.meta.env["VITE_SUPABASE_URL"] as string | undefined;
+  const anonKey = import.meta.env["VITE_SUPABASE_ANON_KEY"] as string | undefined;
   if (!url || !anonKey) {
     throw new InvitationRequestError("Invitation service is not configured.");
   }
@@ -346,6 +353,7 @@ export async function fetchPublicInvitation(slug: string): Promise<PublicInvitat
   try {
     res = await fetch(endpoint, {
       method: "POST",
+      signal: AbortSignal.timeout(15000),
       headers: {
         apikey: anonKey,
         Authorization: `Bearer ${anonKey}`,

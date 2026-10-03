@@ -5,7 +5,8 @@ import type { LiveContent } from "@/lib/publicInvitation";
 export function Venue({ venue }: { venue: LiveContent["venue"] }) {
   const ref = useLightSection<HTMLElement>();
 
-  if (!venue.name && !venue.address && !venue.city && !venue.imageUrl) return null;
+  if (!venue.name && !venue.address && !venue.city && !venue.imageUrl && !venue.mapsUrl)
+    return null;
 
   return (
     <section

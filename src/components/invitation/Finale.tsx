@@ -37,10 +37,10 @@ export function Finale({ groomName, brideName }: FinaleProps) {
           With love
         </p>
         {names.length > 0 && (
-          <h2 className="reveal mt-7 display text-4xl leading-tight text-[color:var(--ivory)] sm:text-6xl">
+          <h2 className="reveal mt-7 flex max-w-[90vw] flex-col items-center break-words display text-4xl leading-tight text-[color:var(--ivory)] sm:text-6xl">
             {names.map((n, i) => (
               <span key={n}>
-                {i > 0 && <span className="mx-3 italic text-[color:var(--gold)]">&amp;</span>}
+                {i > 0 && <span className="block my-2 italic text-[color:var(--gold)]">&amp;</span>}
                 {n.toUpperCase()}
               </span>
             ))}

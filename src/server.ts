@@ -1,4 +1,5 @@
 import "./lib/error-capture";
+import { sanitizeSlug } from "./lib/publicInvitation";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
@@ -48,6 +49,16 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const handler = await getServerEntry();
+      const pathname = new URL(request.url).pathname;
+      // Avoid router URI-decoding errors; render the same empty-link screen.
+      if (pathname !== "/" && !sanitizeSlug(pathname)) {
+        const response = await handler.fetch(
+          new Request(new URL("/", request.url), request),
+          env,
+          ctx,
+        );
+        return new Response(response.body, { status: 404, headers: response.headers });
+      }
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {

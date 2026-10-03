@@ -77,7 +77,7 @@ export function Hero({ invocation, groomName, brideName, dateLine }: HeroProps) 
                     &amp;
                   </span>
                 )}
-                <span className="hero-reveal display text-[2.9rem] leading-[1.05] text-[color:var(--ivory)] sm:text-6xl">
+                <span className="hero-reveal display max-w-[90vw] break-words text-[clamp(1.8rem,8vw,2.9rem)] leading-[1.05] text-[color:var(--ivory)] sm:text-6xl">
                   {name.toUpperCase()}
                 </span>
               </span>
