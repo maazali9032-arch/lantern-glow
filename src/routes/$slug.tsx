@@ -66,26 +66,39 @@ function InvitationPage() {
       className="relative min-h-screen overflow-x-hidden bg-[color:var(--ink)] text-[color:var(--ivory)]"
     >
       <Atmosphere />
-      <BrandRibbon name={result.brandName} />
-      <Hero
-        {...(content.invocation ? { invocation: content.invocation } : {})}
-        {...(content.groom.name ? { groomName: content.groom.name } : {})}
-        {...(content.bride.name ? { brideName: content.bride.name } : {})}
-        {...(dateLine ? { dateLine } : {})}
+
+      <div className="relative z-40">
+        <BrandRibbon name={result.brandName} />
+        <Hero
+          {...(content.invocation ? { invocation: content.invocation } : {})}
+          {...(content.groom.name ? { groomName: content.groom.name } : {})}
+          {...(content.bride.name ? { brideName: content.bride.name } : {})}
+          {...(dateLine ? { dateLine } : {})}
+        />
+        <Message content={content} />
+        <Events events={content.events} />
+        <Gallery items={content.gallery} />
+        <Venue venue={content.venue} />
+        <Contacts contacts={content.contacts} />
+        <Finale
+          {...(content.groom.name ? { groomName: content.groom.name } : {})}
+          {...(content.bride.name ? { brideName: content.bride.name } : {})}
+        />
+      </div>
+
+      <img
+        src="/decorative-frame.webp"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-50 hidden h-screen w-screen object-fill opacity-50 max-[684px]:block"
       />
-      <Message content={content} />
-      <Events events={content.events} />
-      <Gallery items={content.gallery} />
-      <Venue venue={content.venue} />
-      <Contacts contacts={content.contacts} />
-      <Finale
-        {...(content.groom.name ? { groomName: content.groom.name } : {})}
-        {...(content.bride.name ? { brideName: content.bride.name } : {})}
-      />
-      <MusicControl
-        enabled={content.musicEnabled}
-        {...(content.musicUrl ? { src: content.musicUrl } : {})}
-      />
+
+      <div className="relative z-[60]">
+        <MusicControl
+          enabled={content.musicEnabled}
+          {...(content.musicUrl ? { src: content.musicUrl } : {})}
+        />
+      </div>
     </main>
   );
 }
